@@ -1,5 +1,6 @@
 package cn.luvletter.wallhalla;
 
+import cn.luvletter.common.DownloadImage;
 import org.apache.log4j.Logger;
 import us.codecraft.webmagic.Page;
 import us.codecraft.webmagic.Site;
@@ -45,7 +46,7 @@ public class WallHallaSpider implements PageProcessor{
         List<WallHallaImg> wallHallaImgList=new ArrayList<>();
 
         for(Selectable selectable : nodes){
-            String imgId = selectable.regex("data-id").toString();
+            String imgId = selectable.xpath("/div/@data-id").toString();
 
             if(imgId==null||"".equals(imgId)){
                 continue;
@@ -53,12 +54,24 @@ public class WallHallaSpider implements PageProcessor{
 
             String imgSrc = selectable.xpath("img[@class='thumb-img lazyload']/@src").toString();
 
-            String imgHref = selectable.xpath("a[@class='thumb-a']/@href").toString();
+            String imgHref = selectable.xpath("a[@class='thumb-a']/@data-src").toString();
 
             WallHallaImg wallHallaImg=new WallHallaImg()
                     .setImgId(imgId)
                     .setImgHref(imgHref)
                     .setImgSrc(imgSrc);
+
+            log.info("wallhallaImg:"+wallHallaImg.toString());
+
+            try {
+
+                DownloadImage.download(imgSrc,imgId,filePath+"/img");
+
+                log.info("Downloaded:"+imgId);
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
 
             wallHallaImgList.add(wallHallaImg);
         }
@@ -75,9 +88,11 @@ public class WallHallaSpider implements PageProcessor{
 
     public static void main(String[] args) {
 
-        Scanner sc=new Scanner(System.in);
+        //Scanner sc=new Scanner(System.in);
 
-        filePath=sc.next();
+        //filePath=sc.next();
+
+        filePath="D:\\webmagic";
 
         String txtName=filePath+"\\"+"wallhalla.txt";
 
