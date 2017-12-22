@@ -1,5 +1,7 @@
 package cn.luvletter.wallhalla;
 
+import com.alibaba.fastjson.JSON;
+import org.apache.log4j.Logger;
 import us.codecraft.webmagic.ResultItems;
 import us.codecraft.webmagic.Task;
 import us.codecraft.webmagic.pipeline.Pipeline;
@@ -14,6 +16,7 @@ import java.util.List;
  * @ Date 2017/12/21
  */
 public class WallHallaPipeline implements Pipeline{
+    private static final Logger log = Logger.getLogger(WallHallaPipeline.class);
 
     private String filePath;
 
@@ -29,15 +32,7 @@ public class WallHallaPipeline implements Pipeline{
             return ;
         }
 
-        StringBuffer resultBuff=new StringBuffer();
-
-        for(WallHallaImg wallHallaImg : imgList){
-
-            resultBuff.append(wallHallaImg.toString());
-
-            resultBuff.append("\n");
-
-        }
+        String imgJson=JSON.toJSONString(imgList);
 
         try {
 
@@ -45,12 +40,18 @@ public class WallHallaPipeline implements Pipeline{
 
             OutputStreamWriter outputStreamWriter=new OutputStreamWriter(fileOutputStream,"UTF-8");
 
-            outputStreamWriter.write(resultBuff.toString());
+            outputStreamWriter.write(imgJson);
 
             outputStreamWriter.close();
 
+            log.info("[WRITE IN IMG INFO]");
+
         } catch (Exception e) {
+
+            log.error(e.getMessage());
+
             e.printStackTrace();
         }
+
     }
 }

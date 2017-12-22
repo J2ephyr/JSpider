@@ -1,16 +1,20 @@
 package cn.luvletter.wallhalla;
 
 import cn.luvletter.common.DownloadImage;
+import com.alibaba.fastjson.JSON;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 import us.codecraft.webmagic.Page;
 import us.codecraft.webmagic.Site;
 import us.codecraft.webmagic.Spider;
 import us.codecraft.webmagic.processor.PageProcessor;
+import us.codecraft.webmagic.selector.Json;
 import us.codecraft.webmagic.selector.Selectable;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 
 /**
@@ -22,18 +26,37 @@ public class WallHallaSpider implements PageProcessor{
 
     private static final Logger log= Logger.getLogger(WallHallaSpider.class);
 
-    private Set<String> nameSet=new HashSet<String>();
-
     private static String filePath;
+
+    private static final AtomicInteger ID=new AtomicInteger(0);
+
+    private static final AtomicInteger PAGE=new AtomicInteger(1);
+
+    private static final String ROOTURL = "http://wallhalla.com";
 
 
     private Site site = Site.me().setCycleRetryTimes(5).setRetryTimes(5).setSleepTime(500).setTimeOut(3 * 60 * 1000)
+            .setDomain("www.wallhalla.com")
 
-            .setUserAgent("Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.84 Safari/537.36")
+            .setUserAgent("Mozilla/5.0 (Windows NT 10.0; WOW64; rv:57.0) Gecko/20100101 Firefox/57.0")
 
-            .addHeader("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8")
+            .addHeader("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
 
-            .addHeader("Accept-Language", "zh-CN,zh;q=0.9")
+            //.addCookie("__cfduid","d53ecc059fb8992dd14ffe8489a5144981513949700")
+
+            //.addCookie("PHPSESSID","uepkls2ohplb6ugk1focepabb1")
+
+            //.addCookie("settings","{\"qf\":[\"anime\"],\"thpp\":32,\"infscroll\":0,\"winline\":1}")
+
+            //.addHeader("Accept-Encoding","gzip, deflate, br")
+
+            .addHeader("Accept-Language", "zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2")
+
+            .addHeader("Host","wallhalla.com")
+
+            .addHeader("Referer","https://wallhalla.com/")
+
+            .addHeader("Connection","keep-alive")
 
             .setCharset("UTF-8");
 
@@ -52,25 +75,42 @@ public class WallHallaSpider implements PageProcessor{
                 continue;
             }
 
-            String imgSrc = selectable.xpath("img[@class='thumb-img lazyload']/@src").toString();
+            String imgSrc = ROOTURL+selectable.xpath("img[@class='thumb-img lazyload']/@data-src").toString();
 
-            String imgHref = selectable.xpath("a[@class='thumb-a']/@data-src").toString();
+            String imgColor = selectable.xpath("/div/@data-colors").toString();
+
+            String imgSource = selectable.xpath("/div/@data-sources").toString();
+
+            String imgTags = selectable.xpath("/div/@data-tags").toString();
+
+            String imgWH = selectable.xpath("/div/@data-wh").toString();
+
+            String imgHref = ROOTURL+selectable.xpath("a[@class='thumb-a']/@href").toString();
 
             WallHallaImg wallHallaImg=new WallHallaImg()
+                    .setId(String.valueOf(ID.addAndGet(1)))
                     .setImgId(imgId)
+                    .setImgColor(imgColor)
+                    .setImgSources(imgSource)
+                    .setImgTags(imgTags)
+                    .setImgWH(imgWH)
                     .setImgHref(imgHref)
                     .setImgSrc(imgSrc);
-
-            log.info("wallhallaImg:"+wallHallaImg.toString());
+            log.info("[Read WallhallaImg INFO]:"+wallHallaImg.toString());
 
             try {
 
-                DownloadImage.download(imgSrc,imgId,filePath+"/img");
+                DownloadImage.download(imgSrc,imgId+".jpg",filePath);
 
-                log.info("Downloaded:"+imgId);
+                log.info("Downloaded IMG:"+imgId);
 
             } catch (Exception e) {
+
                 e.printStackTrace();
+
+                log.error("[Downloaded Error.imgId]:"+imgId+"imgSrc:"+imgSrc+"\n"+e.getMessage());
+
+
             }
 
             wallHallaImgList.add(wallHallaImg);
@@ -78,7 +118,7 @@ public class WallHallaSpider implements PageProcessor{
 
         page.putField("imgList",wallHallaImgList);
 
-        page.addTargetRequest("/random");
+        page.addTargetRequest("/best&page="+PAGE.addAndGet(1));
     }
 
     @Override
@@ -97,22 +137,31 @@ public class WallHallaSpider implements PageProcessor{
         String txtName=filePath+"\\"+"wallhalla.txt";
 
         File txtFile=new File(txtName);
-
         if(!txtFile.exists()){
 
             try {
                 txtFile.createNewFile();
 
-                log.info("Create File"+txtFile.getAbsolutePath());
+                log.info("[Create File]:"+txtFile.getAbsolutePath());
+
             } catch (IOException e) {
 
                 e.printStackTrace();
             }
+        }
+        filePath+="\\img";
 
+        File imgFile=new File(filePath);
+        if(!imgFile.exists()){
+
+            imgFile.mkdirs();
+
+            log.info("[Create File ]:"+imgFile.getAbsolutePath());
 
         }
+
         Spider.create(new WallHallaSpider())
-                .addUrl("https://wallhalla.com")
+                .addUrl("https://wallhalla.com/best&page=1")
                 .addPipeline(new WallHallaPipeline(txtName))
                 .thread(5)
                 .run();

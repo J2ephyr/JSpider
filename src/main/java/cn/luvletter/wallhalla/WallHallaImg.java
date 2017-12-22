@@ -10,6 +10,10 @@ public class WallHallaImg {
     private String imgId;
     private String imgSrc;
     private String imgHref;
+    private String imgTags;
+    private String imgSources;
+    private String imgColor;
+    private String imgWH;
 
     public String getImgId() {
         return imgId;
@@ -47,6 +51,42 @@ public class WallHallaImg {
         return this;
     }
 
+    public String getImgTags() {
+        return imgTags;
+    }
+
+    public WallHallaImg setImgTags(String imgTags) {
+        this.imgTags = imgTags;
+        return this;
+    }
+
+    public String getImgSources() {
+        return imgSources;
+    }
+
+    public WallHallaImg setImgSources(String imgSources) {
+        this.imgSources = imgSources;
+        return this;
+    }
+
+    public String getImgColor() {
+        return imgColor;
+    }
+
+    public WallHallaImg setImgColor(String imgColor) {
+        this.imgColor = imgColor;
+        return this;
+    }
+
+    public String getImgWH() {
+        return imgWH;
+    }
+
+    public WallHallaImg setImgWH(String imgWH) {
+        this.imgWH = imgWH;
+        return this;
+    }
+
     @Override
     public String toString() {
         return "WallHallaImg{" +
@@ -54,6 +94,10 @@ public class WallHallaImg {
                 ", imgId='" + imgId + '\'' +
                 ", imgSrc='" + imgSrc + '\'' +
                 ", imgHref='" + imgHref + '\'' +
+                ", imgTags='" + imgTags + '\'' +
+                ", imgSources='" + imgSources + '\'' +
+                ", imgColor='" + imgColor + '\'' +
+                ", imgWH='" + imgWH + '\'' +
                 '}';
     }
 }
