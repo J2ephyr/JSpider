@@ -64,7 +64,7 @@ public class WallHallaSpider implements PageProcessor{
     @Override
     public void process(Page page) {
 
-        List<Selectable> nodes = page.getHtml().xpath("div[@class='thumb-wrap]").nodes();
+        List<Selectable> nodes = page.getHtml().xpath("div[@class='thumb-wrap']").nodes();
 
         List<WallHallaImg> wallHallaImgList=new ArrayList<>();
 
@@ -86,6 +86,8 @@ public class WallHallaSpider implements PageProcessor{
             String imgWH = selectable.xpath("/div/@data-wh").toString();
 
             String imgHref = ROOTURL+selectable.xpath("a[@class='thumb-a']/@href").toString();
+
+            page.addTargetRequest(imgHref);
 
             WallHallaImg wallHallaImg=new WallHallaImg()
                     .setId(String.valueOf(ID.addAndGet(1)))
@@ -119,6 +121,15 @@ public class WallHallaSpider implements PageProcessor{
         page.putField("imgList",wallHallaImgList);
 
         page.addTargetRequest("/best&page="+PAGE.addAndGet(1));
+
+        List<Selectable> imgDetailSe = page.getHtml().xpath("div[@class='wall-sources-wrap'").nodes();
+
+        for(Selectable selectable : imgDetailSe){
+            String imgDetailHref = selectable.xpath("/a/@href").toString();
+            String imgDetailId = selectable.xpath("/a/@data-id").toString();
+            String imgSize = selectable.xpath("div[@class='info-reso']/text()").toString();
+        }
+
     }
 
     @Override
