@@ -86,9 +86,9 @@ public class WallHallaSpider implements PageProcessor{
             String imgWH = selectable.xpath("/div/@data-wh").toString();
 
             String imgHref = ROOTURL+selectable.xpath("a[@class='thumb-a']/@href").toString();
-
+            //添加壁纸详情的链接：http://wallhalla.com/wallpaper/zqZXpw1OFzeM
             page.addTargetRequest(imgHref);
-
+            //壁纸列表
             WallHallaImg wallHallaImg=new WallHallaImg()
                     .setId(String.valueOf(ID.addAndGet(1)))
                     .setImgId(imgId)
@@ -119,18 +119,79 @@ public class WallHallaSpider implements PageProcessor{
         }
 
         page.putField("imgList",wallHallaImgList);
-
+        //下一页
         page.addTargetRequest("/best&page="+PAGE.addAndGet(1));
 
-        List<Selectable> imgDetailSe = page.getHtml().xpath("div[@class='wall-sources-wrap'").nodes();
-
+        List<Selectable> imgDetailSe = page.getHtml()
+                .xpath("div[@class='wall-sources-wrap']/")
+                .nodes();
+        //壁纸大小详情
         for(Selectable selectable : imgDetailSe){
+
             String imgDetailHref = selectable.xpath("/a/@href").toString();
+
+            if(imgDetailHref==null||"".equals(imgDetailHref)){
+                continue;
+            }
+
             String imgDetailId = selectable.xpath("/a/@data-id").toString();
             String imgSize = selectable.xpath("div[@class='info-reso']/text()").toString();
+            WallHallaImgDetail wallHallaImgDetail=new WallHallaImgDetail();
+            wallHallaImgDetail.setImgDetailId(imgDetailId)
+                    //imgId:zqZXpw1OFzeM
+                    .setImgId(getImgId(page.getUrl().toString()))
+                    .setImgSize(imgSize);
+            //壁纸详情下载页面链接，如：2560*1440 的壁纸 /out/zqZXpw1OFzeM_GETJ7XK
+            page.addTargetRequest(imgDetailHref);
+        }
+        if(page.getUrl().toString().contains("alpha.wallhaven.cc")){
+            String imgRealSrc = page.getHtml().xpath("img[@class='wallpaper']/@src").toString();
+
+            if ("".equals(imgRealSrc)) {
+                try {
+                    DownloadImage.download(imgRealSrc, getLinkNode(imgRealSrc), filePath);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
         }
 
+        if(page.getUrl().toString().contains("wall.alphacoders.com")) {
+            page.addTargetRequest(page.getHtml().xpath("../img[@class='img-responsive']/@href").toString());
+
+            String imgRealSrc = page.getHtml().xpath("img/@src").toString();
+
+            if ("".equals(imgRealSrc)) {
+                try {
+                    DownloadImage.download(imgRealSrc, getLinkNode(imgRealSrc), filePath);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+
     }
+    private String getImgId(String url){
+        if("".equals(url)){
+            return "";
+        }
+        String[] detail = url.replace("/out/", "").split("_");
+        if(detail.length==0){
+            return "";
+        }
+        return detail[detail.length-1];
+    }
+    private String getLinkNode(String imgRealSrc) {
+        String[] linkNodes = imgRealSrc.replace("https://", "").split("/");
+
+        if(linkNodes.length==0){
+            return null;
+        }
+
+        return linkNodes[linkNodes.length-1];
+    }
+
 
     @Override
     public Site getSite() {
